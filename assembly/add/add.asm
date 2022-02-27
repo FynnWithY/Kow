@@ -5,7 +5,7 @@ global WinMain
 extern printf
 extern exit
 section .data
-	msg db "number is %i ",0
+	msg db "number is %i ", 10, 0
 section .bss
 section .text
 
@@ -14,23 +14,19 @@ section .text
 WinMain:
 	;mov rcx,msg	;On Windows 64, the first four parameters go into rcx, rdx, r8, and r9. 
 	push 5
-	;access 0
-	pop rax
+	push 10
+	
 	push 1
-	push 2
-	push 3
-	push 4
-	
+	push msg
+	pop rcx
 	pop rdx
-	pop rdx
-	mov ebp, esp 
-	mov rcx, msg
 	call printf
-	mov esp, ebp
 	
 	pop rdx
 	mov rcx, msg
 	call printf
+	add esp, 8
+	;mov esp, ebp
 	ret
 	
 	

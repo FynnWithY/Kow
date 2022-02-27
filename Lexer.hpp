@@ -21,6 +21,8 @@ using namespace std;
 
 typedef unsigned long long int u64;
 typedef unsigned int u32;
+typedef unsigned short u16;
+typedef unsigned char u8;
 
 template <class T, class B>
 struct generic_touple
@@ -62,86 +64,106 @@ typedef generic_touple<string, int> strITouple;
 #define OP_SMALLER          0x0E
 #define OP_DUPLICATE        0x0F
 #define OP_INVERT           0x10
+#define OP_MEMORY           0x11
 
 int numCompilerArgs = 0;
 char **compilerArgs;
-touple op_push(u32 x)
+
+typedef float triple[3];
+struct Operation{
+    Operation(u32 type,u32 value=0,u32 jmp=0,triple loc=triple{0,0,0}){
+        this->type=type;
+        this->value=value;
+        this->jmp=jmp;
+        this->loc[0]=loc[0];
+        this->loc[1]=loc[1];
+        this->loc[2]=loc[2];
+    }
+    u32 type;
+    u32 value;
+    u32 jmp;
+    triple loc;
+};
+typedef Operation Op;
+
+Operation op_push(u32 x)
 {
     return {OP_PUSH, x};
 }
-touple op_plus()
+Operation op_plus()
 {
     return {OP_PLUS, 0};
 }
-touple op_minus()
+Operation op_minus()
 {
     return {OP_MINUS, 0};
 }
-touple op_print()
+Operation op_print()
 {
     return {OP_PRINT, 0};
 }
-touple op_none()
+Operation op_none()
 {
-    return {(u32)OP_NONE, (u32)0};
+    return {0, 0};
 }
-touple op_multiply()
+Operation op_multiply()
 {
     return {OP_MULTIPLY, 0};
 }
-touple op_divide()
+Operation op_divide()
 {
     return {OP_DIVIDE, 0};
 }
-touple op_pop()
+Operation op_pop()
 {
     return {OP_POP, 0};
 }
-touple op_push_pointer(u32 p)
+Operation op_push_pointer(u32 p)
 {
     return {OP_PUSH_POINTER, p};
 }
-touple op_push_variable(string name, void *val)
+Operation op_push_variable(string name, void *val)
 {
 }
-touple op_equals()
+Operation op_equals()
 {
     return {OP_EQUALS, 0};
 }
-touple op_if()
+Operation op_if()
 {
     return {OP_IF, 0};
 }
-touple op_end()
+Operation op_end()
 {
     return {OP_END, 0};
 }
-touple op_else(){
+Operation op_else(){
     return {OP_ELSE,0};
 }
-touple op_while(){
+Operation op_while(){
     return {OP_WHILE,0};
 }
-touple op_do(){
+Operation op_do(){
     return {OP_DO,0};
 }
-touple op_smaller(){
+Operation op_smaller(){
     return {OP_SMALLER,0};
 }
-touple op_duplicate(){
+Operation op_duplicate(){
     return {OP_DUPLICATE,0};
 }
-touple op_invert(){
+Operation op_invert(){
     return {OP_INVERT,0};
 }
-
+Operation op_memory(){
+    return {OP_MEMORY,0};
+}
 
 const char *CompilerMode = "sim";
-typedef vector<touple> Programm;
-typedef touple Operation;
+typedef vector<Op> Programm;
 // define functions
 inline bool isInteger(const std::string &s);
-touple lex_col(string op, const char *filePath, int line, int col);
+Operation lex_col(string op, const char *filePath, int line, int col);
 void simulate_programm(Programm operations);
 vector<string> split_string(string text, string c);
 void clean_string(string &str, string c);
@@ -151,8 +173,8 @@ string trim_string_left(string str);
 string make_string_from_parts(const char *data);
 string get_string_until(string str, const char end);
 void remove_from_end(string &str, const char amount);
-string compile_programm(vector<touple> operation);
-vector<touple> lex_line(string line, int lineIndex, const char *filePath);
+string compile_programm(vector<Operation> operation);
+vector<Operation> lex_line(string line, int lineIndex, const char *filePath);
 Programm crossreference_blocks(Programm programm);
 
 // TBD
@@ -282,36 +304,36 @@ Programm crossreference_blocks(Programm programm)
     for (int ip = 0; ip < programm.size(); ip++)
     {
         Operation op = programm[ip];
-        if (op[0] == OP_IF)
+        if (op.type == OP_IF)
         {
             stack.push_back(ip);
-        }else if(op[0] == OP_ELSE){
+        }else if(op.type == OP_ELSE){
             int if_ip=stack.back();
             stack.pop_back();
-            ASSERT(programm[if_ip][0]==OP_IF,"'else' can only be used with 'if'");
+            ASSERT(programm[if_ip].type==OP_IF,"'else' can only be used with 'if'");
             programm[if_ip]={OP_IF,(u32)ip+1};
             stack.push_back(ip);
-        }else if(op[0]==OP_WHILE){
+        }else if(op.type==OP_WHILE){
             stack.push_back(ip);
-        }else if(op[0]==OP_DO){
+        }else if(op.type==OP_DO){
             stack.push_back(ip);
         }
-        else if (op[0] == OP_END)
+        else if (op.type == OP_END)
         {
             int block_ip = stack.back();
             stack.pop_back();
-            if(programm[block_ip][0]==OP_IF || programm[block_ip][0]==OP_ELSE){
-                programm[block_ip] = {programm[block_ip][0], (u32)ip+1};
-                programm[ip]={OP_END,(u32) ip+1};
-            }else if(programm[block_ip][0]==OP_DO){
+            if(programm[block_ip].type==OP_IF || programm[block_ip].type==OP_ELSE){
+                programm[block_ip] = {programm[block_ip].type,0, (u32)ip+1};
+                programm[ip]={OP_END,0,(u32) ip+1};
+            }else if(programm[block_ip].type==OP_DO){
                 int while_ip=stack.back();
                 stack.pop_back();
-                ASSERT(programm[while_ip][0]==OP_WHILE,"'do can only be used with 'while'");
-                programm[ip]={OP_END,(u32)while_ip};
-                programm[block_ip]={OP_DO,(u32)ip+1};
+                ASSERT(programm[while_ip].type==OP_WHILE,"'do can only be used with 'while'");
+                programm[ip]={OP_END,0,(u32)while_ip};
+                programm[block_ip]={OP_DO,0,(u32)ip+1};
             }
             else{
-                ASSERT(programm[block_ip][0]==OP_IF || programm[block_ip][0]==OP_ELSE,"'end' caon only be used with 'if' or 'while'");
+                ASSERT(programm[block_ip].type==OP_IF || programm[block_ip].type==OP_ELSE,"'end' caon only be used with 'if' or 'while'");
             }
             
         }
@@ -326,7 +348,7 @@ void lex_file(const char *path, const char *m)
     if (CompilerMode == "sim")
     {
         vector<string> splitFile = split_string(file, "\n");
-        vector<touple> operations = lex_line(file, 0, path);
+        vector<Operation> operations = lex_line(file, 0, path);
         simulate_programm(operations);
         // for(int line=0;line<splitFile.size();line++){
         //     lex_line(splitFile[line],stack,line,path);
@@ -334,7 +356,7 @@ void lex_file(const char *path, const char *m)
     }
     else if (CompilerMode == "com")
     {
-        vector<touple> operations=lex_line(file, 0, path);
+        vector<Operation> operations=lex_line(file, 0, path);
         string assembly_file = compile_programm(operations);
         string output_path = path;
         output_path += ".asm";
@@ -346,11 +368,16 @@ void lex_file(const char *path, const char *m)
         command = "gcc ";
         string temp = path;
         temp += ".o";
+        command+="external.c ";
         command += temp;
         command += " -o";
         command += path;
         command += ".exe";
         system(command.c_str());
+        output_path.clear();
+        output_path=path;
+       //output_path+="C:\\Users\\49175\\Documents\\C\\testCNotC++\\MyLanguage\\bin\\test.kow.exe";
+       //system(output_path.c_str());
     }
     else
     {
@@ -359,7 +386,7 @@ void lex_file(const char *path, const char *m)
     }
 }
 
-vector<touple> lex_line(string line, int lineIndex, const char *filePath)
+vector<Operation> lex_line(string line, int lineIndex, const char *filePath)
 {
     const char *prevLine = line.c_str();
     vector<strITouple> operations = strip_line(line);
@@ -375,7 +402,7 @@ vector<touple> lex_line(string line, int lineIndex, const char *filePath)
     // }
     return programm;
 }
-touple lex_col(string op, const char *filePath, int line, int col)
+Operation lex_col(string op, const char *filePath, int line, int col)
 {
     int x = 0;
     if (op == "+")
@@ -444,11 +471,11 @@ touple lex_col(string op, const char *filePath, int line, int col)
     return op_none();
 }
 
-string compile_programm(vector<touple> operations)
+string compile_programm(vector<Operation> operations)
 {
     string assembly_file_output_start = "BITS 64\nglobal WinMain";
-    string assembly_file_output_functions = "\nextern printf\nextern exit";
-    string assembly_file_output_section_data = "\nsection .data\nTEXT_INT db \"%i \",0";
+    string assembly_file_output_functions = "\nextern printf\nextern exit\nextern print";
+    string assembly_file_output_section_data = "\nsection .data\nTEXT_INT db \"%i \",10,0";
     string assembly_file_output_sections = "\nsection .bss\nsection .text";
     string assembly_file_output_content = "\nWinMain:";
     for (int i = 0; i < operations.size(); i++)
@@ -458,22 +485,23 @@ string compile_programm(vector<touple> operations)
         assembly_file_output_content +="\naddr_";
         assembly_file_output_content += to_string((int)i);
         assembly_file_output_content +=":\n";
-        switch ((int)operations[i].x)
+        switch ((int)operations[i].type)
         {
         case OP_PUSH:
             assembly_file_output_content += "\n;--PUSH--";
             assembly_file_output_content += "\npush ";
-            temp = to_string((int)operations[i].y);
+            temp = to_string((int)op.value);
             assembly_file_output_content += temp;
             assembly_file_output_content += "\n";
             break;
         case OP_PRINT:
             assembly_file_output_content += "\n;--PRINT--";
             //assembly_file_output_content += "\nmov ebp, esp";
-            assembly_file_output_content += "\nmov rcx, TEXT_INT";
+           // assembly_file_output_content += "\nmov rcx, TEXT_INT";
             assembly_file_output_content += "\npop rdx";
-            assembly_file_output_content += "\ncall printf";
-            assembly_file_output_content += "\nadd esp, 8";
+            assembly_file_output_content += "\ncall print";
+            //assembly_file_output_content += "\nadd esp, 8";
+            //assembly_file_output_content += "\npop rdx";
             //assembly_file_output_content+=  "\nmov esp, ebp";
             break;
         case OP_PLUS:
@@ -541,13 +569,13 @@ string compile_programm(vector<touple> operations)
             assembly_file_output_content += "pop rax\n";
             assembly_file_output_content += "test rax,rax\n";
             assembly_file_output_content += "jz addr_";
-            assembly_file_output_content += to_string((int)op.y);
+            assembly_file_output_content += to_string((int)op.jmp);
             assembly_file_output_content += "\n";
             break;
         case OP_ELSE:
             assembly_file_output_content +="\n;--ELSE--\n";
             assembly_file_output_content +="jmp addr_";
-            assembly_file_output_content += to_string((int)op.y);
+            assembly_file_output_content += to_string((int)op.jmp);
             assembly_file_output_content += "\n";
             //assembly_file_output_content +="addr_";
             //assembly_file_output_content += to_string((int)i+1);
@@ -566,7 +594,7 @@ string compile_programm(vector<touple> operations)
             assembly_file_output_content +="pop rax\n";
             assembly_file_output_content +="test rax, rax\n";
             assembly_file_output_content +="jz addr_";
-            assembly_file_output_content += to_string((int)op.y);
+            assembly_file_output_content += to_string((int)op.jmp);
             assembly_file_output_content += "\n";
             //assembly_file_output_content +="addr_";
             //assembly_file_output_content += to_string((int)i+1);
@@ -579,9 +607,9 @@ string compile_programm(vector<touple> operations)
             //assembly_file_output_content +="addr_";
             //assembly_file_output_content += to_string(i);
             //assembly_file_output_content +=":";
-            if(i+1 != op.y){
+            if(i+1 != op.jmp){
                 assembly_file_output_content +="\njmp addr_";
-                assembly_file_output_content +=to_string((int)op.y);
+                assembly_file_output_content +=to_string((int)op.jmp);
                 assembly_file_output_content +="\n";
             }
             assembly_file_output_content +="addr_";
@@ -599,6 +627,7 @@ string compile_programm(vector<touple> operations)
         default:
             break;
         }
+    
     }
     string assembly_file_output = assembly_file_output_start + assembly_file_output_functions + assembly_file_output_section_data + assembly_file_output_sections + assembly_file_output_content;
     return assembly_file_output;
@@ -612,11 +641,11 @@ void simulate_programm(Programm operations)
     while (ip < operations.size())
     {
 
-        touple operation = operations[ip];
-        switch ((int)operation[0])
+        Operation operation = operations[ip];
+        switch ((int)operation.type)
         {
         case OP_PUSH:
-            stack.push_back(operation.y);
+            stack.push_back(operation.value);
             ip++;
             break;
         case OP_PLUS:
@@ -661,7 +690,7 @@ void simulate_programm(Programm operations)
             ip++;
             break;
         case OP_PUSH_POINTER:
-            stack.push_back(stack[operation.y]);
+            stack.push_back(stack[operation.value]);
             ip++;
             break;
         case OP_EQUALS:
@@ -689,7 +718,7 @@ void simulate_programm(Programm operations)
         case OP_IF:
             if (stack.back() == 0)
             {
-                ip = operation.y;
+                ip = operation.jmp;
             }
             else
             {
@@ -698,10 +727,10 @@ void simulate_programm(Programm operations)
             stack.pop_back();
             break;
         case OP_END:
-            ip=operation.y;
+            ip=operation.jmp;
             break;
         case OP_ELSE:
-            ip=operation.y;
+            ip=operation.jmp;
             break;
         case OP_WHILE:
             ip++;
@@ -710,7 +739,7 @@ void simulate_programm(Programm operations)
             a=stack.back();
             stack.pop_back();
             if(!a){
-                ip=operation.y;
+                ip=operation.jmp;
             }else{
                 ip++;
             }

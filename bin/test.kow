@@ -1,7 +1,8 @@
-0 print
-100 while dup 0 < ! do
-    1 -
-    print
+
+0 while dup 1000 < do
+    1 +
+    dup print
 end
 
-while 1 do end
+while 1 do
+end

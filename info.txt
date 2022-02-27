@@ -1,0 +1,28 @@
+##'+'
+adds the two last numbers of the stack together and pushes the sum back on to the stack.
+##'-'
+subtracts the two last numbers of the stack
+##'print'
+prints the last element of the stack
+##'pop'
+delets the last element of the stack
+##'=='
+checks if the two last elements of the stack are the same
+##'if'
+checks if the last element of the stack is true
+##'else'
+executes when if doesn´t
+##'end'
+ends if statements and loops
+##'while'
+runs a loop while the last element of the stack is true
+##'do'
+must be called after the condition of a while loop is set
+##'<'
+checks if the last element of the stack is greater than the one before
+##'dup'
+duplicates the last element of the stack and pushes it back
+##'!'
+inverts the last element of the stack
+##'mem' 
+pushes the start pointer of the memory

@@ -2,8 +2,9 @@ BITS 64
 global WinMain
 extern printf
 extern exit
+extern print
 section .data
-TEXT_INT db "%i ",0
+TEXT_INT db "%i ",10,0
 section .bss
 section .text
 WinMain:
@@ -14,33 +15,21 @@ push 0
 
 addr_1:
 
-;--PRINT--
-mov rcx, TEXT_INT
-pop rdx
-call printf
-add esp, 8
-addr_2:
-
-;--PUSH--
-push 100
-
-addr_3:
-
 ;--WHILE--
 
-addr_4:
+addr_2:
 
 ;--DUPLICATE--
 pop rax
 push rax
 push rax
 
-addr_5:
+addr_3:
 
 ;--PUSH--
-push 0
+push 1000
 
-addr_6:
+addr_4:
 
 ;--SMALLER--
 mov rcx, 0
@@ -50,65 +39,63 @@ pop rbx
 cmp rax, rbx
 cmovg rcx, rdx
 push rcx
-addr_7:
-
-;--INVERT--
-pop rcx
-xor rcx, 0x01
-push rcx
-
-addr_8:
+addr_5:
 
 ;--DO--
 pop rax
 test rax, rax
-jz addr_13
+jz addr_11
+
+addr_6:
+
+;--PUSH--
+push 1
+
+addr_7:
+
+;--PLUS--
+pop rcx
+pop rdx
+add rcx, rdx
+push rcx
+addr_8:
+
+;--DUPLICATE--
+pop rax
+push rax
+push rax
 
 addr_9:
 
-;--PUSH--
-push 1
-
-addr_10:
-
-;--MINUS--
-pop rdx
-pop rcx
-sub rcx, rdx
-push rcx
-addr_11:
-
 ;--PRINT--
-mov rcx, TEXT_INT
 pop rdx
-call printf
-add esp, 8
-addr_12:
+call print
+addr_10:
 
 ;--END--
 
-jmp addr_3
-addr_13:
+jmp addr_1
+addr_11:
 
-addr_13:
+addr_11:
 
 ;--WHILE--
 
-addr_14:
+addr_12:
 
 ;--PUSH--
 push 1
 
-addr_15:
+addr_13:
 
 ;--DO--
 pop rax
 test rax, rax
-jz addr_17
+jz addr_15
 
-addr_16:
+addr_14:
 
 ;--END--
 
-jmp addr_13
-addr_17:
+jmp addr_11
+addr_15:
