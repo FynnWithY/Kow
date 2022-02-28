@@ -7,16 +7,25 @@ extern exit
 section .data
 	msg db "number is %i ", 10, 0
 section .bss
+mem: resb 640000
 section .text
 
 
 
 WinMain:
 	;mov rcx,msg	;On Windows 64, the first four parameters go into rcx, rdx, r8, and r9. 
+	push mem
 	push 5
-	push 10
 	
-	push 1
+	pop rcx
+	pop rdx 
+	mov [rdx], rcx
+	
+	
+	xor rcx, rcx
+	mov rcx, [rdx]
+	push rcx
+	
 	push msg
 	pop rcx
 	pop rdx
@@ -26,6 +35,11 @@ WinMain:
 	mov rcx, msg
 	call printf
 	add esp, 8
+	
+	
+	mov rcx, msg
+	mov rdx, 5
+	syscall
 	;mov esp, ebp
 	ret
 	

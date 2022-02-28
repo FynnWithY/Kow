@@ -65,6 +65,11 @@ typedef generic_touple<string, int> strITouple;
 #define OP_DUPLICATE        0x0F
 #define OP_INVERT           0x10
 #define OP_MEMORY           0x11
+#define OP_LOAD             0x12
+#define OP_STORE            0x13
+#define OP_SYSCALL3         0x14
+
+#define MEM_CAPACITY        640000
 
 int numCompilerArgs = 0;
 char **compilerArgs;
@@ -157,6 +162,15 @@ Operation op_invert(){
 }
 Operation op_memory(){
     return {OP_MEMORY,0};
+}
+Operation op_load(){
+    return {OP_LOAD,0};
+}
+Operation op_store(){
+    return {OP_STORE,0};
+}
+Operation op_syscall3(){
+    return {OP_SYSCALL3,0};
 }
 
 const char *CompilerMode = "sim";
@@ -452,6 +466,15 @@ Operation lex_col(string op, const char *filePath, int line, int col)
         return op_duplicate();
     }else if(op=="!"){
         return op_invert();
+    }else if(op=="mem"){
+        return op_memory();
+    }else if(op=="."){
+        return op_store();
+    }
+    else if(op==","){
+        return op_load();
+    }else if(op=="syscall3"){
+        return op_syscall3();
     }
     else if (isInteger(op))
     {
@@ -476,7 +499,9 @@ string compile_programm(vector<Operation> operations)
     string assembly_file_output_start = "BITS 64\nglobal WinMain";
     string assembly_file_output_functions = "\nextern printf\nextern exit\nextern print";
     string assembly_file_output_section_data = "\nsection .data\nTEXT_INT db \"%i \",10,0";
-    string assembly_file_output_sections = "\nsection .bss\nsection .text";
+    string assembly_file_output_sections = "\nsection .bss\nmem: resb ";
+    assembly_file_output_sections+=to_string(MEM_CAPACITY);
+    assembly_file_output_sections+="\nsection .text";
     string assembly_file_output_content = "\nWinMain:";
     for (int i = 0; i < operations.size(); i++)
     {
@@ -624,6 +649,34 @@ string compile_programm(vector<Operation> operations)
             assembly_file_output_content+="push rax\n";
             assembly_file_output_content+="push rax\n";
             break;
+        case OP_MEMORY:
+            assembly_file_output_content+="\n;--MEMORY--\n";
+            assembly_file_output_content+="push mem\n";
+            break;
+        case OP_LOAD:
+           //-------- xor rcx, rcx
+	       //-------- mov rcx, [rdx]
+	       //-------- push rcx
+            assembly_file_output_content+="\n;--LOAD--\n";
+            assembly_file_output_content+="xor rcx, rcx\n";
+            assembly_file_output_content+="pop rdx\n";
+            assembly_file_output_content+="mov rcx, [rdx]\n";
+            assembly_file_output_content+="push rcx\n";
+            break;
+        case OP_STORE:
+            assembly_file_output_content+="\n;--STORE--\n";
+            assembly_file_output_content+="pop rcx\n";
+            assembly_file_output_content+="pop rdx\n";
+            assembly_file_output_content+="mov [rdx], rcx\n";
+            break;
+        case OP_SYSCALL3:
+            assembly_file_output_content+="\n;--SYSCALL3--\n";
+            assembly_file_output_content+="pop rax\n";
+            assembly_file_output_content+="pop r8\n";
+            assembly_file_output_content+="pop rdx\n";
+            assembly_file_output_content+="pop rcx\n";
+            assembly_file_output_content+="syscall\n";
+            break;
         default:
             break;
         }
@@ -634,6 +687,7 @@ string compile_programm(vector<Operation> operations)
 }
 void simulate_programm(Programm operations)
 {
+    void* memory=malloc(MEM_CAPACITY);
     vector<int> stack;
     int a = 0;
     int b = 0;
@@ -750,6 +804,10 @@ void simulate_programm(Programm operations)
             stack.push_back(a);
             stack.push_back(a);
             ip++;
+            break;
+        case OP_MEMORY:
+           //stack.push_back((int*)memory);
+           //ip++;
             break;
         default:
             ip++;

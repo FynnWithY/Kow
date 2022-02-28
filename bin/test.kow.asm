@@ -6,50 +6,47 @@ extern print
 section .data
 TEXT_INT db "%i ",10,0
 section .bss
+mem: resb 640000
 section .text
 WinMain:
 addr_0:
 
-;--PUSH--
-push 0
+;--MEMORY--
+push mem
 
 addr_1:
 
-;--WHILE--
+;--PUSH--
+push 0
 
 addr_2:
 
-;--DUPLICATE--
-pop rax
-push rax
-push rax
-
+;--PLUS--
+pop rcx
+pop rdx
+add rcx, rdx
+push rcx
 addr_3:
 
 ;--PUSH--
-push 1000
+push 254
 
 addr_4:
 
-;--SMALLER--
-mov rcx, 0
-mov rdx, 1
-pop rax
-pop rbx
-cmp rax, rbx
-cmovg rcx, rdx
-push rcx
+;--STORE--
+pop rcx
+pop rdx
+mov [rdx], rcx
+
 addr_5:
 
-;--DO--
-pop rax
-test rax, rax
-jz addr_11
+;--MEMORY--
+push mem
 
 addr_6:
 
 ;--PUSH--
-push 1
+push 8
 
 addr_7:
 
@@ -60,42 +57,132 @@ add rcx, rdx
 push rcx
 addr_8:
 
-;--DUPLICATE--
-pop rax
-push rax
-push rax
+;--PUSH--
+push 255
 
 addr_9:
+
+;--STORE--
+pop rcx
+pop rdx
+mov [rdx], rcx
+
+addr_10:
+
+;--MEMORY--
+push mem
+
+addr_11:
+
+;--PUSH--
+push 16
+
+addr_12:
+
+;--PLUS--
+pop rcx
+pop rdx
+add rcx, rdx
+push rcx
+addr_13:
+
+;--PUSH--
+push 256
+
+addr_14:
+
+;--STORE--
+pop rcx
+pop rdx
+mov [rdx], rcx
+
+addr_15:
+
+;--MEMORY--
+push mem
+
+addr_16:
+
+;--PUSH--
+push 0
+
+addr_17:
+
+;--PLUS--
+pop rcx
+pop rdx
+add rcx, rdx
+push rcx
+addr_18:
+
+;--LOAD--
+xor rcx, rcx
+pop rdx
+mov rcx, [rdx]
+push rcx
+
+addr_19:
 
 ;--PRINT--
 pop rdx
 call print
-addr_10:
+addr_20:
 
-;--END--
+;--MEMORY--
+push mem
 
-jmp addr_1
-addr_11:
-
-addr_11:
-
-;--WHILE--
-
-addr_12:
+addr_21:
 
 ;--PUSH--
-push 1
+push 8
 
-addr_13:
+addr_22:
 
-;--DO--
-pop rax
-test rax, rax
-jz addr_15
+;--PLUS--
+pop rcx
+pop rdx
+add rcx, rdx
+push rcx
+addr_23:
 
-addr_14:
+;--LOAD--
+xor rcx, rcx
+pop rdx
+mov rcx, [rdx]
+push rcx
 
-;--END--
+addr_24:
 
-jmp addr_11
-addr_15:
+;--PRINT--
+pop rdx
+call print
+addr_25:
+
+;--MEMORY--
+push mem
+
+addr_26:
+
+;--PUSH--
+push 16
+
+addr_27:
+
+;--PLUS--
+pop rcx
+pop rdx
+add rcx, rdx
+push rcx
+addr_28:
+
+;--LOAD--
+xor rcx, rcx
+pop rdx
+mov rcx, [rdx]
+push rcx
+
+addr_29:
+
+;--PRINT--
+pop rdx
+call print

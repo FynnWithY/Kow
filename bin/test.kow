@@ -1,8 +1,7 @@
+mem 0  + 254 .
+mem 8  + 255 .
+mem 16 + 256 .
 
-0 while dup 1000 < do
-    1 +
-    dup print
-end
-
-while 1 do
-end
+mem 0  + , print
+mem 8  + , print
+mem 16 + , print
