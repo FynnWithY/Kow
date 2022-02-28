@@ -26,3 +26,7 @@ duplicates the last element of the stack and pushes it back
 inverts the last element of the stack
 ##'mem' 
 pushes the start pointer of the memory
+##'.'
+stores data in memory
+##','
+loads data from memory and pushes it into the stack
